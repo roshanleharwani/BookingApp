@@ -1,12 +1,7 @@
-import java.sql.Connection;
+import java.sql.*;
 
 public class test {
     public static void main(String[] args) {
-        try(Connection connection = DB.getConnection()){
-
-        }
-        catch(Exception e){
-            System.out.println(e);
-        }
-    }
+        BookingSystem.lastTransaction();
+  }
 }
