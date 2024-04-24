@@ -6,28 +6,28 @@ public class Main {
         int choice;
         boolean shouldExit = false;
         while(!shouldExit){
-            BookingSystem.menu();
+            BookTheShow.menu();
             System.out.println();
             System.out.print(">> ");
             choice = input.nextInt();
             switch(choice){
                 case 1:
                     while(true){
-                    BookingSystem.mainMenu();
+                    BookTheShow.mainMenu();
                     System.out.println();
                     System.out.print(">> ");
                     choice = input.nextInt();
                     if(choice == 1){
-                        BookingSystem.bookTicket();
+                        BookTheShow.bookTicket();
                     }
                     else if(choice == 2){
-                        BookingSystem.cancelTicket();
+                        BookTheShow.cancelTicket();
                     }
                     else if(choice == 3){
-                        BookingSystem.getRefundStatus();
+                        BookTheShow.getRefundStatus();
                     }
                     else if(choice == 4){
-                        BookingSystem.showUpcomingEvents();
+                        BookTheShow.getUpcomingEvents();
                     }
                     else if(choice == 5){
                         break;
@@ -40,12 +40,12 @@ public class Main {
                     break;
                 case 2:
                     System.out.println();
-                    BookingSystem.showUpcomingEvents();
+                    BookTheShow.getUpcomingEvents();
                     System.out.println();
                     break;
                 case 3:
                     System.out.println();
-                    BookingSystem.lastTransaction();
+                    BookTheShow.getLastTransaction();
                     break;
                 case 4:
                     System.out.println();

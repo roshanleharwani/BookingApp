@@ -1,7 +1,8 @@
 import java.sql.*;
 import java.util.InputMismatchException;
 import java.util.Scanner;
-public class BookingSystem{
+
+public class BookTheShow implements BookingSystem {
     static Scanner input = new Scanner(System.in);
     public static void menu(){
         System.out.println();
@@ -20,7 +21,7 @@ public class BookingSystem{
         System.out.println("4. Events");
         System.out.println("5. Exit");
     }
-    public static void showUpcomingEvents() {
+    public static void getUpcomingEvents() {
         System.out.println("---------------------------Upcoming Events ---------------------------");
         try (Connection connection = DB.getConnection()) {
             Statement statement = connection.createStatement();
@@ -61,7 +62,7 @@ public class BookingSystem{
             return false;
         }
     }
-    public static void bookedTransaction(String customerName, Connection connection) throws SQLException {
+    public static void getBookedTransaction(String customerName, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(Query.bookedTransactions);
         statement.setString(1, customerName);
         ResultSet result = statement.executeQuery();
@@ -84,7 +85,7 @@ public class BookingSystem{
         result.close();
     }
 
-    public static void cancelledTransaction(String customerName, Connection connection) throws SQLException {
+    public static void getCancelledTransaction(String customerName, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(Query.cancelledTransactions);
         statement.setString(1, customerName);
         ResultSet result = statement.executeQuery();
@@ -106,7 +107,7 @@ public class BookingSystem{
         result.close();
     }
 
-    public static void lastTransaction() {
+    public static void getLastTransaction() {
         System.out.println("--------------------------Last Transaction---------------------------");
         Scanner input = new Scanner(System.in); // Define Scanner object
         System.out.print("Enter Customer Name: ");
@@ -115,8 +116,8 @@ public class BookingSystem{
 
         if (customerExists) {
             try (Connection connection = DB.getConnection()) {
-                bookedTransaction(customerName, connection);
-                cancelledTransaction(customerName, connection);
+                getBookedTransaction(customerName, connection);
+                getCancelledTransaction(customerName, connection);
             } catch (Exception e) {
                 System.out.println(e);
             }

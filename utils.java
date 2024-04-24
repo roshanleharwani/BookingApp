@@ -1,6 +1,15 @@
 import java.sql.*;
 
-interface
+interface BookingSystem{
+    static public void getUpcomingEvents(){};
+    static public void getBookedTransaction(String CustomerName,Connection connection) throws SQLException{};
+    static public void getCancelledTransaction(String CustomerName,Connection connection) throws SQLException{};
+    static public void getLastTransaction(){};
+    static public void bookTicket(){};
+    static public void cancelTicket(){};
+    static public void getRefundStatus(){};
+
+}
 
 
 class DB {
