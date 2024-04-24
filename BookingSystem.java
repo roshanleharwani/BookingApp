@@ -1,8 +1,10 @@
 import java.sql.*;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 public class BookingSystem{
     static Scanner input = new Scanner(System.in);
     public static void menu(){
+        System.out.println();
         System.out.println("----------------------------Book Your Show----------------------------");
         System.out.println("1. Main Menu");
         System.out.println("2. Show Upcoming Events");
@@ -10,6 +12,7 @@ public class BookingSystem{
         System.out.println("4. Exit");
     }
     public static void mainMenu(){
+        System.out.println();
         System.out.println("---------------------------Main Menu---------------------------");
         System.out.println("1. Book Ticket");
         System.out.println("2. Cancel Booking");
@@ -21,7 +24,7 @@ public class BookingSystem{
         System.out.println("---------------------------Upcoming Events ---------------------------");
         try (Connection connection = DB.getConnection()) {
             Statement statement = connection.createStatement();
-            ResultSet result = statement.executeQuery(Query.fetchEvents);
+            ResultSet result = statement.executeQuery(Query.getEvents);
 
             System.out.printf("%-10s%-20s%-15s%-30s%-10s%n", "EventID", "Name", "Date", "Venue", "Price");
 
@@ -40,14 +43,14 @@ public class BookingSystem{
     }
     static public boolean isCustomerExist(String name) {
         try (Connection connection = DB.getConnection()) {
-            PreparedStatement statement = connection.prepareStatement(Query.isExitsInBooking);
+            PreparedStatement statement = connection.prepareStatement(Query.isCustomerBookingExist);
             statement.setString(1, name);
             ResultSet result = statement.executeQuery();
             result.next();
             if (result.getInt(1) >= 1) {
                 return true;
             } else {
-                PreparedStatement statement1 = connection.prepareStatement(Query.isExistsInCancellation);
+                PreparedStatement statement1 = connection.prepareStatement(Query.isCancellationExist);
                 statement1.setString(1, name);
                 ResultSet result1 = statement1.executeQuery();
                 result1.next();
@@ -62,12 +65,12 @@ public class BookingSystem{
         PreparedStatement statement = connection.prepareStatement(Query.bookedTransactions);
         statement.setString(1, customerName);
         ResultSet result = statement.executeQuery();
-
+        System.out.println();
         // Check if there are any booked transactions
         if (result.next()) {
             System.out.println("---------------------------Booked Transactions---------------------------");
             System.out.printf("%-10s%-15s%-15s%-15s%-10s%n", "BookingID", "EventID", "BookingDate", "TicketBooked", "Price");
-
+            System.out.println();
             // Print booked transactions
             do {
                 int bookingId = result.getInt(1);
@@ -85,12 +88,12 @@ public class BookingSystem{
         PreparedStatement statement = connection.prepareStatement(Query.cancelledTransactions);
         statement.setString(1, customerName);
         ResultSet result = statement.executeQuery();
-
+        System.out.println();
         // Check if there are any cancelled transactions
         if (result.next()) {
             System.out.println("-------------------------Cancelled Transactions-------------------------");
             System.out.printf("%-10s%-15s%-15s%-15s%-10s%n", "CancelID", "EventID", "CancelDate", "Cancelled", "Price");
-
+            System.out.println();
             // Print cancelled transactions
             do {
                 int cancelId = result.getInt(1);
@@ -126,10 +129,7 @@ public class BookingSystem{
         statement.setInt(1, eventID);
         ResultSet result = statement.executeQuery();
         result.next();
-        if (result.getInt(1) == 1) {
-            return true;
-        }
-        return false;
+        return result.getInt(1) == 1;
     }
     public static double fetchPrice(int eventID, Connection connection) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(Query.price);
@@ -138,14 +138,55 @@ public class BookingSystem{
         result.next();
         return result.getDouble(1);
     }
-    public static void BookTicket(){
+    public static int getTickets(int eventID, Connection connection) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(Query.totalTickets);
+        statement.setInt(1, eventID);
+        ResultSet result = statement.executeQuery();
+        result.next();
+        return result.getInt(1);
+    }
+    public static int getBookedTickets(int bookingId, Connection connection) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(Query.bookedTickets);
+        statement.setInt(1, bookingId);
+        ResultSet result = statement.executeQuery();
+        result.next();
+        return result.getInt(1);
+    }
+    public static void updateTickets(int eventID,int updatedQty, Connection connection) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(Query.updateTable);
+        statement.setInt(1,updatedQty );
+        statement.setInt(2, eventID);
+        statement.executeUpdate();
+    }
+    public static  boolean isBookingExist(int bookingID, Connection connection) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(Query.isBookingExist);
+        statement.setInt(1, bookingID);
+        ResultSet result = statement.executeQuery();
+        result.next();
+        return result.getInt(1) == 1;
+    }
+    public static int fetchEventId(int bookingID, Connection connection) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(Query.eventId);
+        statement.setInt(1, bookingID);
+        ResultSet result = statement.executeQuery();
+        result.next();
+        return result.getInt(1);
+    }
+    public static boolean isCancelled(int cancelId, Connection connection) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(Query.isCancelled);
+        statement.setInt(1, cancelId);
+        ResultSet result = statement.executeQuery();
+        result.next();
+        return result.getInt(1) == 1;
+    }
+    public static void bookTicket(){
         System.out.println("--------------------------Book Ticket---------------------------");
         System.out.print("Enter Event ID: ");
         int eventID = input.nextInt();
         input.nextLine();
         System.out.print("Enter Customer Name: ");
         String customerName = input.nextLine();
-        System.out.println("Enter Number of Tickets: ");
+        System.out.print("Enter Number of Tickets: ");
         int ticket = input.nextInt();
         try(Connection connection = DB.getConnection()){
             if(isEventExist(eventID, connection)){
@@ -155,22 +196,118 @@ public class BookingSystem{
                 statement.setString(2, customerName);
                 statement.setInt(3, ticket);
                 statement.setDouble(4, price);
-                statement.executeUpdate();
-                System.out.println();
-                System.out.println("Ticket Booked Successfully");
-                System.out.println("FOR EVENT ID: " + eventID);
-                System.out.println("Customer Name: " + customerName);
-                System.out.println("Number of Tickets: " + ticket);
-                System.out.println("Total Amount: $" + price);
+                int availableTicket = getTickets(eventID, connection);
+                if(ticket<= availableTicket){
+                    connection.setAutoCommit(false);
+                    statement.executeUpdate();
+                    updateTickets(eventID, availableTicket-ticket, connection);
+                    connection.commit();
+                    System.out.println();
+                    System.out.println("Ticket Booked Successfully");
+                    System.out.println("FOR EVENT ID: " + eventID);
+                    System.out.println("Customer Name: " + customerName);
+                    System.out.println("Number of Tickets: " + ticket);
+                    System.out.println("Total Amount: $" + price);
+                }
+                else{
+                    System.out.println("Required Tickets are not available");
+                    System.out.println("Available Tickets: " + availableTicket);
+                }
             }
             else{
-                System.out.println("Event does not exist.");
+                System.out.println("Event Not Found.");
             }
         }
         catch (Exception e){
-            System.out.println(e.getMessage());
+            System.out.println("Something went wrong");
+        }
+    }
+    public static void cancelTicket() {
+        Connection connection = null;
+        try {
+            System.out.print("Enter Booking ID: ");
+            int bookingId = input.nextInt();
+            System.out.print("Enter Number Of Tickets: ");
+            int tickets = input.nextInt();
+
+            try {
+                connection = DB.getConnection();
+                connection.setAutoCommit(false);
+
+                if (isBookingExist(bookingId, connection)) {
+                    int event_id = fetchEventId(bookingId, connection);
+                    double refundAmount = fetchPrice(event_id,connection) * tickets;
+
+                    try (PreparedStatement statement = connection.prepareStatement(Query.cancelTicket)) {
+                        statement.setInt(1, bookingId);
+                        statement.setInt(2, tickets);
+                        statement.setDouble(3, refundAmount);
+                        statement.setInt(4, bookingId);
+                        statement.executeUpdate();
+                    }
+
+                    // Update booked tickets in bookedtickets table
+                    int bookedTickets = getBookedTickets(bookingId, connection);
+                    if (tickets < bookedTickets) {
+                        try (PreparedStatement statement = connection.prepareStatement(Query.updateBooking)) {
+                            statement.setInt(1, bookedTickets - tickets);
+                            statement.setInt(2, bookingId);
+                            statement.executeUpdate();
+                        }
+                    } else if (tickets == bookedTickets) {
+                        try (PreparedStatement statement = connection.prepareStatement(Query.deleteBooking)) {
+                            statement.setInt(1, bookingId);
+                            statement.executeUpdate();
+                        }
+                    } else {
+                        System.out.println("Number of ticket booked are: " + bookedTickets);
+                        System.out.println("Please try lower or equal to Booked Tickets");
+                    }
+
+                    // Update available tickets in event table
+                    int availableTicket = getTickets(event_id, connection);
+                    updateTickets(event_id, availableTicket + tickets, connection);
+
+                    connection.commit();
+                } else {
+                    System.out.println("Booking Not Found !!");
+                }
+            } catch (SQLException e) {
+                System.out.println("Database error: " + e.getMessage());
+                if (connection != null) {
+                    connection.rollback(); // Rollback transaction on error
+                }
+            }
+        } catch (InputMismatchException e) {
+            System.out.println("Invalid input.");
+        } catch (Exception e) {
+            System.out.println("Something went wrong: " + e.getMessage());
+        } finally {
+            try {
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                System.out.println("Error closing connection: " + e.getMessage());
+            }
         }
     }
 
+    public static  void getRefundStatus(){
+        System.out.println("Enter Cancel ID: ");
+        int cancelId = input.nextInt();
+        try(Connection connection = DB.getConnection()){
+            if(isCancelled(cancelId, connection)){
+                PreparedStatement statement = connection.prepareStatement(Query.getRefundStatus);
+                statement.setInt(1, cancelId);
+                ResultSet result = statement.executeQuery();
+                result.next();
+                System.out.println("Refund of $"+result.getInt(1)+" initiated to the source account");
+            }
+        }
+        catch (Exception e){
+            System.out.println("Something went wrong");
+        }
+    }
 
 }
