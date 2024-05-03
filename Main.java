@@ -49,6 +49,9 @@ public class Main {
                     break;
                 case 4:
                     System.out.println();
+                    BookTheShow.getEventBookings();
+                case 5:
+                    System.out.println();
                     shouldExit= true;
                     break;
             }
